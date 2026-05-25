@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import Link from 'next/link'
 import type { Fornecedor, CategoriaFornecedor } from '@/types'
 import { FornecedorModal } from './modal'
+import { BackButton } from '@/components/layout/BackButton'
 
 const catColors: Record<CategoriaFornecedor, string> = {
   infraestrutura: 'badge-blue', software: 'badge-purple', cloud: 'badge-indigo',
@@ -38,6 +39,7 @@ export function FornecedoresClient({ items, count, page, perPage }: { items: For
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
+          <BackButton href="/dashboard" label="Voltar para Dashboard" />
           <div><h2 className="page-title">Fornecedores</h2><p className="page-subtitle">{count} cadastrados</p></div>
           <button onClick={() => setOpen(true)} className="btn-primary"><Plus className="w-4 h-4" />Novo Fornecedor</button>
         </div>

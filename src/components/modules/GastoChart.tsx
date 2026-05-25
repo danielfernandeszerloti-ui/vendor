@@ -2,7 +2,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 
-export function GastoChart({ data }: { data: Array<{ valor_mensal?: number | null; fornecedor?: { nome: string } | null }> }) {
+export function GastoChart({ data }: { data: any[] }) {
   const grouped = data.reduce((acc: Record<string, number>, c) => {
     const nome = c.fornecedor?.nome || 'Outros'
     acc[nome] = (acc[nome] || 0) + (c.valor_mensal || 0)

@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import Link from 'next/link'
 import type { Servico } from '@/types'
 import { ServicoModal } from './modal'
+import { BackButton } from '@/components/layout/BackButton'
 
 const statusColor: Record<string, string> = { operacional: 'badge-green', degradado: 'badge-yellow', fora_do_ar: 'badge-red', manutencao: 'badge-blue' }
 const critColor: Record<string, string> = { baixa: 'badge-green', media: 'badge-yellow', alta: 'badge-orange', critica: 'badge-red' }
@@ -36,6 +37,7 @@ export function ServicosClient({ items, count, page, perPage, fornecedores }: { 
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
+          <BackButton href="/dashboard" label="Voltar para Dashboard" />
           <div><h2 className="page-title">Serviços</h2><p className="page-subtitle">{count} registros</p></div>
           <button onClick={() => setOpen(true)} className="btn-primary"><Plus className="w-4 h-4" />Novo Serviço</button>
         </div>

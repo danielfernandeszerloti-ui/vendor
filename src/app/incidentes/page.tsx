@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/Navbar'
 import { IncidentesClient } from './client'
 
+
 export default async function Page({ searchParams }: { searchParams: { search?: string; status?: string; page?: string } }) {
   const supabase = createClient()
   const page = Number(searchParams.page) || 1

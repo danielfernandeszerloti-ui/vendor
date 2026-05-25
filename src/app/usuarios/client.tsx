@@ -6,6 +6,7 @@ import { formatDate } from '@/lib/utils'
 import { Users, Edit, Save, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { Usuario } from '@/types'
+import { BackButton } from '@/components/layout/BackButton'
 
 const roleLabel: Record<string, string> = { administrador: 'Administrador', ti: 'TI', visualizacao: 'Visualização' }
 const roleColor: Record<string, string> = { administrador: 'badge-red', ti: 'badge-blue', visualizacao: 'badge-gray' }
@@ -35,6 +36,7 @@ export function UsuariosClient({ usuarios, currentUserId }: { usuarios: Usuario[
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
+        <BackButton href="/dashboard" label="Voltar para Dashboard" />
         <div><h2 className="page-title">Usuários</h2><p className="page-subtitle">{usuarios.length} usuários cadastrados</p></div>
       </div>
 

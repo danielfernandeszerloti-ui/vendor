@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/Navbar'
 import { formatCurrency, getDaysUntilExpiry, isContractExpired } from '@/lib/utils'
-import { Building2, FileText, AlertTriangle, DollarSign, TrendingUp, Clock } from 'lucide-react'
+import { Building2, FileText, AlertTriangle, DollarSign, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { GastoChart } from '@/components/modules/GastoChart'
 
@@ -16,7 +16,7 @@ export default async function DashboardPage() {
     { count: servicosCriticos },
     { data: contratosVencendo },
     { data: incidentesRecentes },
-    { data: contratosGastos },
+    { data: contratosGastosRaw },
   ] = await Promise.all([
     supabase.from('fornecedores').select('*', { count: 'exact', head: true }),
     supabase.from('fornecedores').select('*', { count: 'exact', head: true }).eq('status', 'ativo'),
@@ -28,7 +28,8 @@ export default async function DashboardPage() {
     supabase.from('contratos').select('valor_mensal,fornecedor:fornecedores(nome)').eq('status', 'ativo').not('valor_mensal', 'is', null),
   ])
 
-  const gastoTotal = contratosGastos?.reduce((s, c) => s + (c.valor_mensal || 0), 0) || 0
+  const contratosGastos = (contratosGastosRaw || []) as any[]
+  const gastoTotal = contratosGastos.reduce((s: number, c: any) => s + (c.valor_mensal || 0), 0)
 
   const impactoColor: Record<string, string> = { baixo: 'badge-green', medio: 'badge-yellow', alto: 'badge-orange', critico: 'badge-red' }
   const statusColor: Record<string, string> = { aberto: 'badge-red', em_andamento: 'badge-yellow', resolvido: 'badge-green', fechado: 'badge-gray' }
@@ -39,7 +40,6 @@ export default async function DashboardPage() {
     <div>
       <Navbar title="Dashboard" subtitle="Visão geral do ambiente TI" />
       <div className="p-6 space-y-6 animate-in">
-        {/* Stats */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {[
             { label: 'Fornecedores Ativos', value: fornecedoresAtivos ?? 0, sub: `de ${totalFornecedores ?? 0} cadastrados`, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
@@ -58,10 +58,9 @@ export default async function DashboardPage() {
           ))}
         </div>
 
-        {/* Charts + Alerts */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2">
-          <GastoChart data={(contratosGastos || []) as any} />
+            <GastoChart data={contratosGastos} />
           </div>
           <div className="card p-5">
             <div className="flex items-center gap-2 mb-4">
@@ -90,11 +89,10 @@ export default async function DashboardPage() {
                 })}
               </div>
             )}
-            <Link href="/contratos" className="mt-4 text-xs text-brand-600 hover:underline block text-center">Ver todos →</Link>
+            <Link href="/contratos" className="mt-4 text-xs hover:underline block text-center" style={{ color: '#1a1f6e' }}>Ver todos →</Link>
           </div>
         </div>
 
-        {/* Recent incidents */}
         <div className="card">
           <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-800">
             <div className="flex items-center gap-2">
@@ -120,7 +118,7 @@ export default async function DashboardPage() {
                   {(incidentesRecentes || []).map((i: any) => (
                     <tr key={i.id} className="table-row">
                       <td className="table-cell">
-                        <Link href={`/incidentes/${i.id}`} className="font-medium text-gray-900 dark:text-white hover:text-brand-600 transition-colors">{i.titulo}</Link>
+                        <Link href={`/incidentes/${i.id}`} className="font-medium text-gray-900 dark:text-white hover:underline transition-colors">{i.titulo}</Link>
                       </td>
                       <td className="table-cell text-gray-500">{i.fornecedor?.nome || '—'}</td>
                       <td className="table-cell"><span className={impactoColor[i.impacto]}>{impactoLabel[i.impacto]}</span></td>

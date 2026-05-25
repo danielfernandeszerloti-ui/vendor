@@ -3,6 +3,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { redirect } from 'next/navigation'
 import { formatDateTime } from '@/lib/utils'
 import { Shield } from 'lucide-react'
+import { BackButton } from '@/components/layout/BackButton'
 
 export default async function Page({ searchParams }: { searchParams: { page?: string } }) {
   const supabase = createClient()
@@ -34,6 +35,7 @@ export default async function Page({ searchParams }: { searchParams: { page?: st
   return (
     <div>
       <Navbar title="Auditoria" subtitle="Histórico de ações no sistema" />
+      <BackButton href="/dashboard" label="Voltar para Dashboard" />
       <div className="p-6 animate-in">
         <div className="flex items-center justify-between mb-4">
           <div>

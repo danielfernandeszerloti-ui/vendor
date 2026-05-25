@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import Link from 'next/link'
 import type { Incidente } from '@/types'
 import { IncidenteModal } from './modal'
+import { BackButton } from '@/components/layout/BackButton'
 
 const statusColor: Record<string, string> = { aberto: 'badge-red', em_andamento: 'badge-yellow', resolvido: 'badge-green', fechado: 'badge-gray' }
 const impactoColor: Record<string, string> = { baixo: 'badge-green', medio: 'badge-yellow', alto: 'badge-orange', critico: 'badge-red' }
@@ -37,6 +38,7 @@ export function IncidentesClient({ items, count, page, perPage, fornecedores }: 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
+            <BackButton href="/dashboard" label="Voltar para Dashboard" />
             <h2 className="page-title">Incidentes</h2>
             <p className="page-subtitle">{count} registros · <span className={abertos > 0 ? 'text-red-500 font-medium' : 'text-gray-500'}>{abertos} em aberto</span></p>
           </div>
