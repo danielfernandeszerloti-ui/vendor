@@ -2,23 +2,31 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { BackButton } from '@/components/layout/BackButton'
-import { formatDate, CATEGORIA_LABELS } from '@/lib/utils'
+import { formatDate, formatDateTime, CATEGORIA_LABELS } from '@/lib/utils'
 import Link from 'next/link'
-import { Building2, FileText, Server, AlertTriangle, Globe, Mail, Phone, User } from 'lucide-react'
+import { Building2, FileText, Server, AlertTriangle, Globe, Mail, Phone, User, Download } from 'lucide-react'
 
 export default async function Page({ params }: { params: { id: string } }) {
   const supabase = createClient()
   const { data: fornecedor } = await supabase.from('fornecedores').select('*').eq('id', params.id).single()
   if (!fornecedor) notFound()
 
-  const [{ data: contratos }, { data: servicos }, { data: incidentes }] = await Promise.all([
+  const [{ data: contratos }, { data: servicos }, { data: incidentes }, { data: anexos }] = await Promise.all([
     supabase.from('contratos').select('*').eq('fornecedor_id', params.id).order('data_vencimento'),
     supabase.from('servicos').select('*').eq('fornecedor_id', params.id).order('nome'),
     supabase.from('incidentes').select('*').eq('fornecedor_id', params.id).order('created_at', { ascending: false }).limit(5),
+    supabase.from('fornecedor_anexos').select('*').eq('fornecedor_id', params.id).order('created_at', { ascending: false }),
   ])
 
   const statusColor: Record<string, string> = { aberto: 'badge-red', em_andamento: 'badge-yellow', resolvido: 'badge-green', fechado: 'badge-gray' }
   const servicoStatus: Record<string, string> = { operacional: 'badge-green', degradado: 'badge-yellow', fora_do_ar: 'badge-red', manutencao: 'badge-blue' }
+
+  function formatSize(bytes: number) {
+    if (!bytes) return ''
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  }
 
   return (
     <div>
@@ -26,6 +34,7 @@ export default async function Page({ params }: { params: { id: string } }) {
       <div className="p-6 max-w-5xl space-y-6 animate-in">
         <BackButton href="/fornecedores" label="Voltar para Fornecedores" />
 
+        {/* Header */}
         <div className="card p-6">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
@@ -60,11 +69,13 @@ export default async function Page({ params }: { params: { id: string } }) {
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4">
           {[
-            { label: 'Contratos',  value: contratos?.length  || 0, icon: FileText,      color: '#1a1f6e' },
+            { label: 'Boletos',    value: contratos?.length  || 0, icon: FileText,      color: '#1a1f6e' },
             { label: 'Serviços',   value: servicos?.length   || 0, icon: Server,        color: '#00c8b4' },
             { label: 'Incidentes', value: incidentes?.length || 0, icon: AlertTriangle, color: '#e91e8c' },
+            { label: 'Documentos', value: anexos?.length     || 0, icon: Download,      color: '#7c3aed' },
           ].map(s => (
             <div key={s.label} className="card p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: s.color + '20' }}>
@@ -78,14 +89,42 @@ export default async function Page({ params }: { params: { id: string } }) {
           ))}
         </div>
 
+        {/* Anexos */}
+        {(anexos?.length ?? 0) > 0 && (
+          <div className="card">
+            <div className="flex items-center gap-2 p-5 border-b border-gray-100 dark:border-gray-800">
+              <Download className="w-4 h-4" style={{ color: '#7c3aed' }} />
+              <h2 className="font-semibold text-gray-900 dark:text-white">Documentos e Contratos</h2>
+            </div>
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+              {anexos?.map(anexo => (
+                <a key={anexo.id} href={anexo.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors group">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-600 transition-colors">{anexo.nome_original}</p>
+                    <p className="text-xs text-gray-400">{formatSize(anexo.tamanho_bytes)} · {formatDate(anexo.created_at)}</p>
+                  </div>
+                  <Download className="w-4 h-4 text-gray-400 group-hover:text-blue-600 flex-shrink-0 transition-colors" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Boletos */}
         {(contratos?.length ?? 0) > 0 && (
           <div className="card">
             <div className="flex items-center gap-2 p-5 border-b border-gray-100 dark:border-gray-800">
               <FileText className="w-4 h-4" style={{ color: '#1a1f6e' }} />
-              <h2 className="font-semibold text-gray-900 dark:text-white">Contratos</h2>
+              <h2 className="font-semibold text-gray-900 dark:text-white">Boletos</h2>
             </div>
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800/50"><tr><th className="table-header">Número</th><th className="table-header">Início</th><th className="table-header">Vencimento</th><th className="table-header">Status</th></tr></thead>
+              <thead className="bg-gray-50 dark:bg-gray-800/50">
+                <tr><th className="table-header">Número</th><th className="table-header">Início</th><th className="table-header">Vencimento</th><th className="table-header">Status</th></tr>
+              </thead>
               <tbody>
                 {contratos?.map(c => (
                   <tr key={c.id} className="table-row">
@@ -100,6 +139,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           </div>
         )}
 
+        {/* Serviços */}
         {(servicos?.length ?? 0) > 0 && (
           <div className="card">
             <div className="flex items-center gap-2 p-5 border-b border-gray-100 dark:border-gray-800">
@@ -107,7 +147,9 @@ export default async function Page({ params }: { params: { id: string } }) {
               <h2 className="font-semibold text-gray-900 dark:text-white">Serviços</h2>
             </div>
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800/50"><tr><th className="table-header">Nome</th><th className="table-header">Tipo</th><th className="table-header">Ambiente</th><th className="table-header">Status</th></tr></thead>
+              <thead className="bg-gray-50 dark:bg-gray-800/50">
+                <tr><th className="table-header">Nome</th><th className="table-header">Tipo</th><th className="table-header">Ambiente</th><th className="table-header">Status</th></tr>
+              </thead>
               <tbody>
                 {servicos?.map(s => (
                   <tr key={s.id} className="table-row">
@@ -122,6 +164,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           </div>
         )}
 
+        {/* Incidentes */}
         {(incidentes?.length ?? 0) > 0 && (
           <div className="card">
             <div className="flex items-center gap-2 p-5 border-b border-gray-100 dark:border-gray-800">
@@ -129,7 +172,9 @@ export default async function Page({ params }: { params: { id: string } }) {
               <h2 className="font-semibold text-gray-900 dark:text-white">Incidentes Recentes</h2>
             </div>
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800/50"><tr><th className="table-header">Título</th><th className="table-header">Impacto</th><th className="table-header">Status</th><th className="table-header">Data</th></tr></thead>
+              <thead className="bg-gray-50 dark:bg-gray-800/50">
+                <tr><th className="table-header">Título</th><th className="table-header">Impacto</th><th className="table-header">Status</th><th className="table-header">Data</th></tr>
+              </thead>
               <tbody>
                 {incidentes?.map(i => (
                   <tr key={i.id} className="table-row">

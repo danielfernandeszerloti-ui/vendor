@@ -17,7 +17,7 @@ export default async function Page({ searchParams }: { searchParams: { search?: 
 
   return (
     <div>
-      <Navbar title="Contratos" subtitle="Controle de contratos e vencimentos" />
+      <Navbar title="Boletos" subtitle="Controle de boletos e vencimentos" />
       <div className="p-6 animate-in">
         <ContratosClient items={data || []} count={count || 0} page={page} perPage={per} fornecedores={fornecedores || []} />
       </div>

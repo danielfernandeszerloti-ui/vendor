@@ -12,7 +12,7 @@ import Image from 'next/image'
 const nav = [
   { href: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/fornecedores', icon: Building2,        label: 'Fornecedores' },
-  { href: '/contratos',    icon: FileText,         label: 'Contratos' },
+  { href: '/contratos',    icon: FileText,         label: 'Boletos' },
   { href: '/servicos',     icon: Server,           label: 'Serviços' },
   { href: '/incidentes',   icon: AlertTriangle,    label: 'Incidentes' },
 ]

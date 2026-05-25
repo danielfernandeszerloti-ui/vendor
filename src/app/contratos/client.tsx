@@ -60,7 +60,7 @@ export function ContratosClient({ items, count, page, perPage, fornecedores }: {
         <div className="flex items-center justify-between">
           <div>
             <BackButton href="/dashboard" label="Voltar para Dashboard" />
-            <h2 className="page-title">Contratos</h2>
+            <h2 className="page-title">Boletos</h2>
             <p className="page-subtitle">
               {count} registros ·{' '}
               <span className={pendentes > 0 ? 'text-yellow-600 font-medium' : 'text-gray-500'}>
@@ -68,7 +68,7 @@ export function ContratosClient({ items, count, page, perPage, fornecedores }: {
               </span>
             </p>
           </div>
-          <button onClick={() => setOpen(true)} className="btn-primary"><Plus className="w-4 h-4" />Novo Contrato</button>
+          <button onClick={() => setOpen(true)} className="btn-primary"><Plus className="w-4 h-4" />Novo Boleto</button>
         </div>
 
         <div className="card p-4 flex gap-3 flex-wrap">

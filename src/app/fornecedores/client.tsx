@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, Building2, Edit, Trash2, Eye, Filter } from 'lucide-react'
+import { Plus, Search, Building2, Edit, Trash2, Eye, Filter, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { CATEGORIA_LABELS, cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -97,6 +97,13 @@ export function FornecedoresClient({ items, count, page, perPage }: { items: For
                     </td>
                     <td className="table-cell">
                       <div className="flex items-center gap-1">
+                        {(f as any).arquivo_contrato_url && (
+                          <a href={(f as any).arquivo_contrato_url} target="_blank" rel="noopener noreferrer"
+                            className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                            title="Ver contrato">
+                            <FileText className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                         <Link href={`/fornecedores/${f.id}`} className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors" title="Ver"><Eye className="w-3.5 h-3.5" /></Link>
                         <button onClick={() => edit(f)} className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Editar"><Edit className="w-3.5 h-3.5" /></button>
                         <button onClick={() => del(f.id, f.nome)} className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>

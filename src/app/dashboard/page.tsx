@@ -43,7 +43,7 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {[
             { label: 'Fornecedores Ativos', value: fornecedoresAtivos ?? 0, sub: `de ${totalFornecedores ?? 0} cadastrados`, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-            { label: 'Contratos Ativos', value: totalContratos ?? 0, sub: 'vigentes', icon: FileText, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+            { label: 'Boletos Pendentes', value: totalContratos ?? 0, sub: 'aguardando pagamento', icon: FileText, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
             { label: 'Incidentes Abertos', value: incidentesAbertos ?? 0, sub: 'aguardando resolução', icon: AlertTriangle, color: (incidentesAbertos ?? 0) > 0 ? 'text-red-600' : 'text-emerald-600', bg: (incidentesAbertos ?? 0) > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20' },
             { label: 'Gasto Mensal', value: formatCurrency(gastoTotal), sub: 'em contratos ativos', icon: DollarSign, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', isText: true },
           ].map(s => (
@@ -65,17 +65,17 @@ export default async function DashboardPage() {
           <div className="card p-5">
             <div className="flex items-center gap-2 mb-4">
               <Clock className="w-4 h-4 text-yellow-500" />
-              <h3 className="font-semibold text-gray-900 dark:text-white">Contratos Vencendo</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Boletos Vencendo</h3>
             </div>
             {(contratosVencendo || []).length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">Nenhum contrato vencendo</p>
+              <p className="text-sm text-gray-500 text-center py-8">Nenhum boleto vencendo</p>
             ) : (
               <div className="space-y-2">
                 {(contratosVencendo || []).map((c: any) => {
                   const dias = getDaysUntilExpiry(c.data_vencimento)
                   const exp = isContractExpired(c.data_vencimento)
                   return (
-                    <Link key={c.id} href={`/contratos/${c.id}`}
+                    <Link key={c.id} href={`/contratos`}
                       className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.fornecedor?.nome}</p>
