@@ -77,6 +77,7 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
       const payload = {
         fornecedor_id: form.fornecedor_id,
         numero_contrato: form.numero_contrato || null,
+        tipo_servico: form.tipo_servico || null,
         data_inicio: form.data_inicio,
         data_vencimento: form.data_vencimento,
         renovacao_automatica: form.renovacao_automatica,
