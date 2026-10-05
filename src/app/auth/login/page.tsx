@@ -55,7 +55,7 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex items-center gap-4">
           <div className="w-14 h-14 flex items-center justify-center">
-            <Image src="/logo.png" alt="Zerbini" width={56} height={56} className="object-contain" />
+            <Image src="/logo.png" alt="Zerbini" width={80} height={80} className="object-contain" />
           </div>
           <div>
             <p className="text-white font-bold text-xl leading-tight">Zerbini do Brasil</p>

@@ -23,6 +23,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
   const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
+  const path = request.nextUrl.pathname
 
   if (!user && !isAuthPage) {
     const url = request.nextUrl.clone()
@@ -34,6 +35,27 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // Restrição para perfil financeiro
+  if (user) {
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const role = usuario?.role
+
+    const rotasFinanceiro = ['/dashboard', '/contratos']
+    const isFinanceiro = role === 'financeiro'
+    const rotaPermitida = rotasFinanceiro.some(r => path === r || path.startsWith(r + '/'))
+
+    if (isFinanceiro && !rotaPermitida && !isAuthPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/contratos'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

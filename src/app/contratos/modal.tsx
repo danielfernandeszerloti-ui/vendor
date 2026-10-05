@@ -13,11 +13,11 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
   const supabase = createClient()
   const isEdit = !!contrato
   const [saving, setSaving] = useState(false)
-  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [arquivo, setArquivo] = useState<File | null>(null) 
   const [arquivoAtual, setArquivoAtual] = useState<{ nome: string; url: string } | null>(null)
 
   const [form, setForm] = useState({
-    fornecedor_id: '', numero_contrato: '', data_inicio: '', data_vencimento: '',
+    fornecedor_id: '', numero_contrato: '', tipo_servico: '', data_inicio: '', data_vencimento: '',
     renovacao_automatica: false, valor_mensal: '', criticidade: 'media',
     responsavel_interno: '', observacoes: '', status: 'ativo',
     status_pagamento: 'pendente', mes_competencia: '', ano_competencia: '', data_pagamento: '',
@@ -40,6 +40,7 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
         mes_competencia: contrato.mes_competencia || '',
         ano_competencia: contrato.ano_competencia || '',
         data_pagamento: contrato.data_pagamento || '',
+        tipo_servico: contrato.tipo_servico || '',
       })
       if (contrato.arquivo_boleto_nome && contrato.arquivo_boleto_url) {
         setArquivoAtual({ nome: contrato.arquivo_boleto_nome, url: contrato.arquivo_boleto_url })
@@ -48,7 +49,7 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
       }
     } else {
       setForm({
-        fornecedor_id: '', numero_contrato: '', data_inicio: '', data_vencimento: '',
+        fornecedor_id: '', numero_contrato: '', tipo_servico: '', data_inicio: '', data_vencimento: '',
         renovacao_automatica: false, valor_mensal: '', criticidade: 'media',
         responsavel_interno: '', observacoes: '', status: 'ativo',
         status_pagamento: 'pendente', mes_competencia: '', ano_competencia: '', data_pagamento: '',
@@ -151,6 +152,10 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
             <div>
               <label className="label">Número do Contrato</label>
               <input className="input" placeholder="CTR-2024-001" value={form.numero_contrato} onChange={e => set('numero_contrato', e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Tipo de Serviço</label>
+              <input className="input" placeholder="Ex: Móvel, Fixo, Link Dedicado, ERP..." value={form.tipo_servico || ''} onChange={e => set('tipo_servico', e.target.value)} />
             </div>
             <div>
               <label className="label">Responsável Interno</label>

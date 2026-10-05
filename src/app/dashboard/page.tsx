@@ -4,28 +4,39 @@ import { formatCurrency, getDaysUntilExpiry, isContractExpired } from '@/lib/uti
 import { Building2, FileText, AlertTriangle, DollarSign, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { GastoChart } from '@/components/modules/GastoChart'
+import { DashboardFiltro } from '@/components/modules/DashboardFiltro'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { mes?: string; ano?: string }
+}) {
   const supabase = createClient()
+
+  const hoje = new Date()
+  const mes = searchParams.mes ? parseInt(searchParams.mes) : hoje.getMonth() + 1
+  const ano = searchParams.ano ? parseInt(searchParams.ano) : hoje.getFullYear()
+
+  const dataInicio = `${ano}-${String(mes).padStart(2, '0')}-01`
+  const ultimoDia = new Date(ano, mes, 0).getDate()
+  const dataFim = `${ano}-${String(mes).padStart(2, '0')}-${ultimoDia}`
 
   const [
     { count: totalFornecedores },
     { count: fornecedoresAtivos },
-    { count: totalContratos },
+    { count: boletosAbertos },
     { count: incidentesAbertos },
-    { count: servicosCriticos },
     { data: contratosVencendo },
     { data: incidentesRecentes },
     { data: contratosGastosRaw },
   ] = await Promise.all([
     supabase.from('fornecedores').select('*', { count: 'exact', head: true }),
     supabase.from('fornecedores').select('*', { count: 'exact', head: true }).eq('status', 'ativo'),
-    supabase.from('contratos').select('*', { count: 'exact', head: true }).eq('status', 'ativo'),
-    supabase.from('incidentes').select('*', { count: 'exact', head: true }).in('status', ['aberto', 'em_andamento']),
-    supabase.from('servicos').select('*', { count: 'exact', head: true }).eq('criticidade', 'critica').eq('status', 'operacional'),
-    supabase.from('contratos').select('id,numero_contrato,data_vencimento,criticidade,fornecedor:fornecedores(nome)').eq('status', 'ativo').order('data_vencimento').limit(5),
-    supabase.from('incidentes').select('id,titulo,status,impacto,created_at,fornecedor:fornecedores(nome)').in('status', ['aberto', 'em_andamento']).order('created_at', { ascending: false }).limit(5),
-    supabase.from('contratos').select('valor_mensal,fornecedor:fornecedores(nome)').eq('status', 'ativo').not('valor_mensal', 'is', null),
+    supabase.from('contratos').select('*', { count: 'exact', head: true }).eq('status', 'ativo').neq('status_pagamento', 'pago').gte('data_vencimento', dataInicio).lte('data_vencimento', dataFim),
+    supabase.from('incidentes').select('*', { count: 'exact', head: true }).in('status', ['aberto', 'em_andamento']).gte('created_at', dataInicio).lte('created_at', dataFim + 'T23:59:59'),
+    supabase.from('contratos').select('id,numero_contrato,data_vencimento,criticidade,fornecedor:fornecedores(nome)').eq('status', 'ativo').neq('status_pagamento', 'pago').gte('data_vencimento', dataInicio).lte('data_vencimento', dataFim).order('data_vencimento').limit(5),
+    supabase.from('incidentes').select('id,titulo,status,impacto,created_at,fornecedor:fornecedores(nome)').in('status', ['aberto', 'em_andamento']).gte('created_at', dataInicio).lte('created_at', dataFim + 'T23:59:59').order('created_at', { ascending: false }).limit(5),
+    supabase.from('contratos').select('valor_mensal,fornecedor:fornecedores(nome)').eq('status', 'ativo').gte('data_vencimento', dataInicio).lte('data_vencimento', dataFim).not('valor_mensal', 'is', null),
   ])
 
   const contratosGastos = (contratosGastosRaw || []) as any[]
@@ -36,22 +47,36 @@ export default async function DashboardPage() {
   const statusLabel: Record<string, string> = { aberto: 'Aberto', em_andamento: 'Em andamento', resolvido: 'Resolvido', fechado: 'Fechado' }
   const impactoLabel: Record<string, string> = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto', critico: 'Crítico' }
 
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+
   return (
     <div>
       <Navbar title="Dashboard" subtitle="Visão geral do ambiente TI" />
       <div className="p-6 space-y-6 animate-in">
+
+        {/* Filtro de mês/ano */}
+        <DashboardFiltro mesAtual={mes} anoAtual={ano} />
+
+        {/* Período selecionado */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Exibindo dados de <span className="font-bold text-gray-900 dark:text-white">{MESES[mes - 1]} {ano}</span>
+          </span>
+        </div>
+
+        {/* Stats */}
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {[
             { label: 'Fornecedores Ativos', value: fornecedoresAtivos ?? 0, sub: `de ${totalFornecedores ?? 0} cadastrados`, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-            { label: 'Boletos Pendentes', value: totalContratos ?? 0, sub: 'aguardando pagamento', icon: FileText, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+            { label: 'Boletos Pendentes', value: boletosAbertos ?? 0, sub: 'aguardando pagamento', icon: FileText, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
             { label: 'Incidentes Abertos', value: incidentesAbertos ?? 0, sub: 'aguardando resolução', icon: AlertTriangle, color: (incidentesAbertos ?? 0) > 0 ? 'text-red-600' : 'text-emerald-600', bg: (incidentesAbertos ?? 0) > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20' },
-            { label: 'Gasto Mensal', value: formatCurrency(gastoTotal), sub: 'em contratos ativos', icon: DollarSign, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', isText: true },
+            { label: 'Gasto Mensal', value: formatCurrency(gastoTotal), sub: 'em boletos do período', icon: DollarSign, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20', isText: true },
           ].map(s => (
             <div key={s.label} className="card p-5">
               <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-4`}>
                 <s.icon className={`w-5 h-5 ${s.color}`} />
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{s.isText ? s.value : Number(s.value).toLocaleString('pt-BR')}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{(s as any).isText ? s.value : Number(s.value).toLocaleString('pt-BR')}</p>
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{s.label}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{s.sub}</p>
             </div>
@@ -68,14 +93,14 @@ export default async function DashboardPage() {
               <h3 className="font-semibold text-gray-900 dark:text-white">Boletos Vencendo</h3>
             </div>
             {(contratosVencendo || []).length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">Nenhum boleto vencendo</p>
+              <p className="text-sm text-gray-500 text-center py-8">Nenhum boleto vencendo no período</p>
             ) : (
               <div className="space-y-2">
                 {(contratosVencendo || []).map((c: any) => {
                   const dias = getDaysUntilExpiry(c.data_vencimento)
                   const exp = isContractExpired(c.data_vencimento)
                   return (
-                    <Link key={c.id} href={`/contratos`}
+                    <Link key={c.id} href="/contratos"
                       className="flex items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.fornecedor?.nome}</p>
@@ -102,7 +127,7 @@ export default async function DashboardPage() {
             <Link href="/incidentes" className="btn-secondary text-xs py-1.5">Ver todos</Link>
           </div>
           {(incidentesRecentes || []).length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-12">Nenhum incidente aberto</p>
+            <p className="text-sm text-gray-500 text-center py-12">Nenhum incidente aberto no período</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

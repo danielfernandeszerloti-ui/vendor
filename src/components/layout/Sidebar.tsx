@@ -10,14 +10,14 @@ import type { Usuario } from '@/types'
 import Image from 'next/image'
 
 const nav = [
-  { href: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/fornecedores', icon: Building2,        label: 'Fornecedores' },
-  { href: '/contratos',    icon: FileText,         label: 'Boletos' },
-  { href: '/servicos',     icon: Server,           label: 'Serviços' },
-  { href: '/incidentes',   icon: AlertTriangle,    label: 'Incidentes' },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['administrador', 'ti', 'visualizacao', 'financeiro'] },
+  { href: '/fornecedores', icon: Building2, label: 'Fornecedores', roles: ['administrador', 'ti', 'visualizacao'] },
+  { href: '/contratos', icon: FileText, label: 'Boletos', roles: ['administrador', 'ti', 'visualizacao', 'financeiro'] },
+  { href: '/servicos', icon: Server, label: 'Serviços', roles: ['administrador', 'ti', 'visualizacao'] },
+  { href: '/incidentes', icon: AlertTriangle, label: 'Incidentes', roles: ['administrador', 'ti', 'visualizacao'] },
 ]
 const adminNav = [
-  { href: '/usuarios',  icon: Users,  label: 'Usuários' },
+  { href: '/usuarios', icon: Users, label: 'Usuários' },
   { href: '/auditoria', icon: Shield, label: 'Auditoria' },
 ]
 
@@ -48,7 +48,7 @@ export function Sidebar({ user }: { user: Usuario | null }) {
       <div className="flex items-center gap-3 h-16 border-b border-gray-200 dark:border-gray-800 px-4 flex-shrink-0"
         style={{ background: 'linear-gradient(135deg, #1a1f6e 0%, #0f1347 100%)' }}>
         <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
-          <Image src="/logo.png" alt="Zerbini" width={32} height={32} className="object-contain" />
+          <Image src="/logo.png" alt="Zerbini" width={48} height={48} className="object-contain" />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
@@ -60,7 +60,7 @@ export function Sidebar({ user }: { user: Usuario | null }) {
 
       <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto scrollbar-thin">
         {!collapsed && <p className="px-3 text-[10px] font-semibold text-gray-400 uppercase tracking-widest py-2">Menu</p>}
-        {nav.map(item => {
+        {nav.filter(item => item.roles.includes(user?.role || '')).map(item => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link key={item.href} href={item.href} title={collapsed ? item.label : undefined}

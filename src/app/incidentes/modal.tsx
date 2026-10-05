@@ -35,22 +35,29 @@ export function IncidenteModal({ open, onClose, incidente, fornecedores, onSucce
     else reset({ status: 'aberto', impacto: 'medio', data_abertura: new Date().toISOString().slice(0, 16) })
   }, [incidente, reset])
 
-  async function onSubmit(data: F) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Não autorizado')
-      if (isEdit) {
-        const { error } = await supabase.from('incidentes').update({ ...data, updated_by: user.id }).eq('id', incidente!.id)
-        if (error) throw error
-        toast.success('Incidente atualizado!')
-      } else {
-        const { error } = await supabase.from('incidentes').insert({ ...data, created_by: user.id })
-        if (error) throw error
-        toast.success('Incidente registrado!')
-      }
-      onSuccess()
-    } catch (e: any) { toast.error(e.message || 'Erro ao salvar') }
-  }
+async function onSubmit(data: F) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Não autorizado')
+
+    const payload = {
+      ...data,
+      data_resolucao: data.data_resolucao || null,
+      sla_horas: data.sla_horas || null,
+    }
+
+    if (isEdit) {
+      const { error } = await supabase.from('incidentes').update({ ...payload, updated_by: user.id }).eq('id', incidente!.id)
+      if (error) throw error
+      toast.success('Incidente atualizado!')
+    } else {
+      const { error } = await supabase.from('incidentes').insert({ ...payload, created_by: user.id })
+      if (error) throw error
+      toast.success('Incidente registrado!')
+    }
+    onSuccess()
+  } catch (e: any) { toast.error(e.message || 'Erro ao salvar') }
+}
 
   if (!open) return null
   return (
