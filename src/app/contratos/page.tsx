@@ -2,15 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/layout/Navbar'
 import { ContratosClient } from './client'
 
-export default async function Page({ searchParams }: { searchParams: { search?: string; status?: string; page?: string } }) {
+export default async function Page({ searchParams }: { searchParams: { search?: string; status?: string; pagamento?: string; mes?: string; page?: string } }) {
   const supabase = createClient()
   const page = Number(searchParams.page) || 1
   const per = 20
   const from = (page - 1) * per
 
   let q = supabase.from('contratos').select('*, fornecedor:fornecedores(id,nome)', { count: 'exact' })
-  if (searchParams.search) q = q.or(`numero_contrato.ilike.%${searchParams.search}%,responsavel_interno.ilike.%${searchParams.search}%`)
+
+  if (searchParams.search) q = q.or(`numero_contrato.ilike.%${searchParams.search}%,responsavel_interno.ilike.%${searchParams.search}%,tipo_servico.ilike.%${searchParams.search}%`)
   if (searchParams.status) q = q.eq('status', searchParams.status)
+  if (searchParams.pagamento) q = q.eq('status_pagamento', searchParams.pagamento)
+  if (searchParams.mes) q = q.eq('mes_competencia', parseInt(searchParams.mes))
 
   const { data, count } = await q.order('data_vencimento').range(from, from + per - 1)
   const { data: fornecedores } = await supabase.from('fornecedores').select('id,nome').eq('status', 'ativo').order('nome')

@@ -3,13 +3,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Search, FileText, Edit, Trash2, Filter, AlertCircle, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { formatDate, formatCurrency, getDaysUntilExpiry, isContractExpired, STATUS_CONTRATO_LABELS, CRITICIDADE_LABELS } from '@/lib/utils'
+import { formatDate, formatCurrency, getDaysUntilExpiry, isContractExpired, STATUS_CONTRATO_LABELS } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import { ContratoModal } from './modal'
 import { BackButton } from '@/components/layout/BackButton'
 
-const critColor: Record<string, string> = { baixa: 'badge-green', media: 'badge-yellow', alta: 'badge-orange', critica: 'badge-red' }
 const statusColor: Record<string, string> = { ativo: 'badge-green', vencido: 'badge-red', cancelado: 'badge-gray', em_renovacao: 'badge-yellow' }
 const pagamentoColor: Record<string, string> = { pendente: 'badge-yellow', pago: 'badge-green', vencido: 'badge-red' }
 const pagamentoLabel: Record<string, string> = { pendente: 'Pendente', pago: 'Pago', vencido: 'Vencido' }
@@ -26,7 +25,7 @@ export function ContratosClient({ items, count, page, perPage, fornecedores }: {
   const totalPages = Math.ceil(count / perPage)
 
   async function del(id: string) {
-    if (!confirm('Excluir este contrato?')) return
+    if (!confirm('Excluir este boleto?')) return
     const { error } = await supabase.from('contratos').delete().eq('id', id)
     if (error) { toast.error('Erro ao excluir'); return }
     toast.success('Excluído'); router.refresh()
@@ -50,6 +49,13 @@ export function ContratosClient({ items, count, page, perPage, fornecedores }: {
     if (filtroPagamento) params.set('pagamento', filtroPagamento)
     if (filtroMes) params.set('mes', filtroMes)
     router.push(`/contratos?${params.toString()}`)
+  }
+
+  function limparFiltros() {
+    setSearch('')
+    setFiltroPagamento('')
+    setFiltroMes('')
+    router.push('/contratos')
   }
 
   const pendentes = items.filter(i => i.status_pagamento === 'pendente' || !i.status_pagamento).length
@@ -88,21 +94,22 @@ export function ContratosClient({ items, count, page, perPage, fornecedores }: {
             <option value="">Todos os meses</option>
             {MESES.map((m, i) => <option key={i} value={String(i + 1)}>{m}</option>)}
           </select>
-          <button onClick={applyFilters} className="btn-secondary"><Filter className="w-4 h-4" />Filtrar</button>
-          <button onClick={() => { setSearch(''); setFiltroPagamento(''); setFiltroMes(''); router.push('/contratos') }} className="btn-secondary">Limpar</button>
+          <button onClick={applyFilters} className="btn-primary py-2"><Filter className="w-4 h-4" />Filtrar</button>
+          <button onClick={limparFiltros} className="btn-secondary py-2">Limpar</button>
         </div>
 
         <div className="card overflow-hidden">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <FileText className="w-12 h-12 text-gray-300 mb-3" />
-              <p className="font-medium text-gray-500">Nenhum contrato encontrado</p>
+              <p className="font-medium text-gray-500">Nenhum boleto encontrado</p>
             </div>
           ) : (
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-800/50">
                 <tr>
                   <th className="table-header">Fornecedor</th>
+                  <th className="table-header">Tipo de Serviço</th>
                   <th className="table-header">Competência</th>
                   <th className="table-header">Vencimento</th>
                   <th className="table-header">Valor/mês</th>
@@ -122,6 +129,7 @@ export function ContratosClient({ items, count, page, perPage, fornecedores }: {
                         <p className="font-medium text-gray-900 dark:text-white">{c.fornecedor?.nome || '—'}</p>
                         {c.numero_contrato && <p className="text-xs text-gray-500 font-mono">{c.numero_contrato}</p>}
                       </td>
+                      <td className="table-cell text-sm text-gray-500">{c.tipo_servico || '—'}</td>
                       <td className="table-cell text-sm text-gray-500">
                         {c.mes_competencia ? `${MESES[c.mes_competencia - 1]}${c.ano_competencia ? `/${c.ano_competencia}` : ''}` : '—'}
                       </td>
