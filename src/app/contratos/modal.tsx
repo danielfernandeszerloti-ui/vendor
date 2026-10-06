@@ -20,7 +20,7 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
     fornecedor_id: '', numero_contrato: '', tipo_servico: '', data_inicio: '', data_vencimento: '',
     renovacao_automatica: false, valor_mensal: '', criticidade: 'media',
     responsavel_interno: '', observacoes: '', status: 'ativo',
-    status_pagamento: 'pendente', mes_competencia: '', ano_competencia: '', data_pagamento: '',
+    status_pagamento: 'pendente', mes_competencia: '', ano_competencia: '', data_pagamento: '', forma_pagamento: 'boleto',
   })
 
   useEffect(() => {
@@ -41,6 +41,7 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
         ano_competencia: contrato.ano_competencia || '',
         data_pagamento: contrato.data_pagamento || '',
         tipo_servico: contrato.tipo_servico || '',
+        forma_pagamento: contrato.forma_pagamento || 'boleto',
       })
       if (contrato.arquivo_boleto_nome && contrato.arquivo_boleto_url) {
         setArquivoAtual({ nome: contrato.arquivo_boleto_nome, url: contrato.arquivo_boleto_url })
@@ -52,7 +53,7 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
         fornecedor_id: '', numero_contrato: '', tipo_servico: '', data_inicio: '', data_vencimento: '',
         renovacao_automatica: false, valor_mensal: '', criticidade: 'media',
         responsavel_interno: '', observacoes: '', status: 'ativo',
-        status_pagamento: 'pendente', mes_competencia: '', ano_competencia: '', data_pagamento: '',
+        status_pagamento: 'pendente', forma_pagamento: 'boleto', mes_competencia: '', ano_competencia: '', data_pagamento: '',
       })
       setArquivoAtual(null)
     }
@@ -90,6 +91,7 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
         mes_competencia: form.mes_competencia ? Number(form.mes_competencia) : null,
         ano_competencia: form.ano_competencia ? Number(form.ano_competencia) : null,
         data_pagamento: form.data_pagamento || null,
+        forma_pagamento: form.forma_pagamento || 'boleto',
       }
 
       let contratoId = contrato?.id
@@ -190,6 +192,14 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
                 <option value="em_renovacao">Em renovação</option>
                 <option value="vencido">Vencido</option>
                 <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Forma de Pagamento</label>
+              <select className="input" value={form.forma_pagamento} onChange={e => set('forma_pagamento', e.target.value)}>
+                <option value="boleto">Boleto</option>
+                <option value="pix">Transferência / PIX</option>
+                <option value="cartao_credito">Cartão de Crédito</option>
               </select>
             </div>
             <div>

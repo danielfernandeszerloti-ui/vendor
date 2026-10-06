@@ -113,6 +113,7 @@ export function ContratosClient({ items, count, page, perPage, fornecedores }: {
                   <th className="table-header">Competência</th>
                   <th className="table-header">Vencimento</th>
                   <th className="table-header">Valor/mês</th>
+                  <th className="table-header">Forma Pgto</th>
                   <th className="table-header">Pagamento</th>
                   <th className="table-header">Status</th>
                   <th className="table-header">Ações</th>
@@ -146,6 +147,9 @@ export function ContratosClient({ items, count, page, perPage, fornecedores }: {
                         </div>
                       </td>
                       <td className="table-cell font-medium">{c.valor_mensal ? formatCurrency(c.valor_mensal) : '—'}</td>
+                      <td className="table-cell text-xs text-gray-500">
+                        {c.forma_pagamento === 'pix' ? 'PIX/TED' : c.forma_pagamento === 'cartao_credito' ? 'Cartão' : 'Boleto'}
+                      </td>
                       <td className="table-cell">
                         <span className={pagamentoColor[pagamento]}>{pagamentoLabel[pagamento]}</span>
                         {c.data_pagamento && <p className="text-xs text-gray-400 mt-0.5">{formatDate(c.data_pagamento)}</p>}
