@@ -14,9 +14,12 @@ export default async function Page() {
   const { data: usuarios } = await supabase.from('usuarios').select('*').order('nome')
 
   return (
-    <div>
-      <Navbar title="Usuários" subtitle="Controle de acesso e permissões" />
-      <div className="p-6 animate-in">
+    <div className="flex flex-col h-full">
+      <Navbar
+        title="Usuários"
+        crumbs={[{ label: 'Admin', href: '/dashboard' }, { label: 'Usuários' }]}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden animate-in">
         <UsuariosClient usuarios={usuarios || []} currentUserId={user.id} />
       </div>
     </div>

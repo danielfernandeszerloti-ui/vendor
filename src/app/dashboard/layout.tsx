@@ -9,12 +9,19 @@ export default async function Layout({ children }: { children: React.ReactNode }
   if (!user) redirect('/auth/login')
 
   const { data: usuario } = await supabase
-    .from('usuarios').select('*').eq('id', user.id).single()
+    .from('usuarios')
+    .select('*')
+    .eq('id', user.id)
+    .single()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950">
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg)' }}>
       <Sidebar user={usuario as Usuario | null} />
-      <main className="flex-1 overflow-y-auto scrollbar-thin">{children}</main>
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
+          {children}
+        </div>
+      </main>
     </div>
   )
 }

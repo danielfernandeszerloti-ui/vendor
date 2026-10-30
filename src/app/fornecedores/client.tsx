@@ -1,112 +1,238 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Plus, Search, Building2, Edit, Trash2, Eye, Filter, FileText } from 'lucide-react'
+import { useState, useTransition, useCallback } from 'react'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import {
+  Plus, Search, Building2, Edit, Trash2, Eye, ExternalLink,
+  ChevronDown, X as XIcon,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { CATEGORIA_LABELS, cn } from '@/lib/utils'
+import { CATEGORIA_LABELS } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import type { Fornecedor, CategoriaFornecedor } from '@/types'
 import { FornecedorModal } from './modal'
-import { BackButton } from '@/components/layout/BackButton'
+import { Pagination } from '@/components/layout/Pagination'
 
 const catColors: Record<CategoriaFornecedor, string> = {
-  infraestrutura: 'badge-blue', software: 'badge-purple', cloud: 'badge-indigo',
-  telecomunicacoes: 'badge-yellow', seguranca: 'badge-red',
-  consultoria: 'badge-gray', hardware: 'badge-orange', outros: 'badge-gray',
+  infraestrutura: 'badge-blue',
+  software:       'badge-purple',
+  cloud:          'badge-indigo',
+  telecomunicacoes: 'badge-yellow',
+  seguranca:      'badge-red',
+  consultoria:    'badge-gray',
+  hardware:       'badge-orange',
+  outros:         'badge-gray',
+}
+const statusColor: Record<string, string> = {
+  ativo:    'badge-green',
+  inativo:  'badge-gray',
+  suspenso: 'badge-red',
+}
+const statusLabel: Record<string, string> = {
+  ativo: 'Ativo', inativo: 'Inativo', suspenso: 'Suspenso',
 }
 
-export function FornecedoresClient({ items, count, page, perPage }: { items: Fornecedor[]; count: number; page: number; perPage: number }) {
-  const router = useRouter()
+interface Props {
+  items:   Fornecedor[]
+  count:   number
+  page:    number
+  perPage: number
+  role:    string
+}
+
+export function FornecedoresClient({ items, count, page, perPage, role }: Props) {
+  const router      = useRouter()
+  const pathname    = usePathname()
+  const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
   const supabase = createClient()
-  const [open, setOpen] = useState(false)
+
+  const [open, setOpen]       = useState(false)
   const [editing, setEditing] = useState<Fornecedor | null>(null)
-  const [search, setSearch] = useState('')
-  const totalPages = Math.ceil(count / perPage)
+  const [search, setSearch]   = useState(searchParams.get('search') || '')
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  const isAdmin = role === 'administrador'
+
+  function updateFilter(key: string, value: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) params.set(key, value)
+    else params.delete(key)
+    params.delete('page')
+    startTransition(() => { router.push(`${pathname}?${params.toString()}`) })
+  }
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault()
+    updateFilter('search', search.trim())
+  }
 
   async function del(id: string, nome: string) {
-    if (!confirm(`Excluir "${nome}"? Esta ação não pode ser desfeita.`)) return
+    if (!confirm(`Excluir "${nome}"?\nEsta ação não pode ser desfeita e removerá todos os dados vinculados.`)) return
+    setDeleting(id)
     const { error } = await supabase.from('fornecedores').delete().eq('id', id)
-    if (error) { toast.error('Erro ao excluir'); return }
-    toast.success('Excluído com sucesso')
+    setDeleting(null)
+    if (error) { toast.error('Erro ao excluir o fornecedor'); return }
+    toast.success('Fornecedor excluído com sucesso')
     router.refresh()
   }
 
-  function edit(f: Fornecedor) { setEditing(f); setOpen(true) }
-  function close() { setOpen(false); setEditing(null) }
+  function openEdit(f: Fornecedor) { setEditing(f); setOpen(true) }
+  function closeModal()            { setOpen(false); setEditing(null) }
+
+  const hasFilters = !!searchParams.get('search')
 
   return (
     <>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <BackButton href="/dashboard" label="Voltar para Dashboard" />
-          <div><h2 className="page-title">Fornecedores</h2><p className="page-subtitle">{count} cadastrados</p></div>
-          <button onClick={() => setOpen(true)} className="btn-primary"><Plus className="w-4 h-4" />Novo Fornecedor</button>
-        </div>
+      {/* Filtros */}
+      <div className="filter-bar">
+        <form onSubmit={handleSearch} className="search-input-wrapper flex-1 min-w-48 max-w-80">
+          <Search className="search-icon" />
+          <input
+            className="input"
+            placeholder="Buscar nome, email, CNPJ..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </form>
 
-        <div className="card p-4 flex gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input className="input pl-9" placeholder="Buscar nome, email, CNPJ..." value={search} onChange={e => setSearch(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') router.push(`/fornecedores?search=${search}`) }} />
-          </div>
-          <button onClick={() => router.push(`/fornecedores?search=${search}`)} className="btn-secondary"><Filter className="w-4 h-4" />Filtrar</button>
-          {search && <button onClick={() => { setSearch(''); router.push('/fornecedores') }} className="btn-secondary">Limpar</button>}
-        </div>
+        <button onClick={handleSearch as any} className="btn-secondary btn-md">
+          <Search className="w-3.5 h-3.5" />Filtrar
+        </button>
 
-        <div className="card overflow-hidden">
+        {hasFilters && (
+          <button
+            onClick={() => { setSearch(''); router.push(pathname) }}
+            className="btn-ghost btn-md"
+          >
+            <XIcon className="w-3.5 h-3.5" />Limpar
+          </button>
+        )}
+
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {count.toLocaleString('pt-BR')} {count === 1 ? 'fornecedor' : 'fornecedores'}
+          </span>
+          {(role === 'administrador' || role === 'ti') && (
+            <button onClick={() => { setEditing(null); setOpen(true) }} className="btn-primary btn-md">
+              <Plus className="w-4 h-4" />Novo fornecedor
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tabela */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="table-container flex-1">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-3">
-                <Building2 className="w-7 h-7 text-gray-400" />
+            <div className="empty-state">
+              <div className="empty-icon">
+                <Building2 className="w-6 h-6" style={{ color: 'var(--text-muted)' }} />
               </div>
-              <p className="font-medium text-gray-600 dark:text-gray-400">Nenhum fornecedor encontrado</p>
-              <p className="text-sm text-gray-400 mt-1">Clique em "Novo Fornecedor" para começar</p>
+              {hasFilters ? (
+                <>
+                  <p className="empty-title">Nenhum resultado encontrado</p>
+                  <p className="empty-desc">Tente outros termos ou remova os filtros</p>
+                  <button onClick={() => { setSearch(''); router.push(pathname) }} className="btn-ghost btn-sm mt-3">
+                    <XIcon className="w-3.5 h-3.5" />Limpar filtros
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="empty-title">Nenhum fornecedor cadastrado</p>
+                  <p className="empty-desc">Comece adicionando seu primeiro fornecedor</p>
+                  {(role === 'administrador' || role === 'ti') && (
+                    <button onClick={() => setOpen(true)} className="btn-primary btn-sm mt-3">
+                      <Plus className="w-3.5 h-3.5" />Novo fornecedor
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           ) : (
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-800/50">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <th className="table-header">Empresa</th>
-                  <th className="table-header">Categoria</th>
-                  <th className="table-header">Contato</th>
-                  <th className="table-header">SLA</th>
-                  <th className="table-header">Status</th>
-                  <th className="table-header">Ações</th>
+                  <th className="th" style={{ width: '35%' }}>Empresa</th>
+                  <th className="th">Categoria</th>
+                  <th className="th hidden md:table-cell">Contato</th>
+                  <th className="th hidden lg:table-cell">SLA</th>
+                  <th className="th">Status</th>
+                  <th className="th" style={{ width: 1 }}></th>
                 </tr>
               </thead>
               <tbody>
                 {items.map(f => (
-                  <tr key={f.id} className="table-row">
-                    <td className="table-cell">
-                      <Link href={`/fornecedores/${f.id}`} className="font-semibold text-gray-900 dark:text-white hover:text-brand-600 transition-colors block">{f.nome}</Link>
-                      {f.cnpj && <p className="text-xs text-gray-500 mt-0.5">{f.cnpj}</p>}
-                    </td>
-                    <td className="table-cell"><span className={catColors[f.categoria]}>{CATEGORIA_LABELS[f.categoria]}</span></td>
-                    <td className="table-cell">
-                      <div className="text-xs">
-                        {f.email && <p className="text-gray-600 dark:text-gray-400">{f.email}</p>}
-                        {f.telefone && <p className="text-gray-500">{f.telefone}</p>}
+                  <tr key={f.id} className="tr group/row">
+                    <td className="td">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                          style={{ background: 'var(--brand-navy)' }}
+                        >
+                          {f.nome.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <Link href={`/fornecedores/${f.id}`}
+                            className="font-medium hover:underline truncate block"
+                            style={{ color: 'var(--text-primary)' }}>
+                            {f.nome}
+                          </Link>
+                          {f.cnpj && (
+                            <p className="text-xs truncate tabular" style={{ color: 'var(--text-muted)' }}>
+                              {f.cnpj}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </td>
-                    <td className="table-cell text-xs text-gray-500">{f.sla || '—'}</td>
-                    <td className="table-cell">
-                      <span className={f.status === 'ativo' ? 'badge-green' : 'badge-red'}>
-                        {f.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                    <td className="td">
+                      <span className={catColors[f.categoria as CategoriaFornecedor] || 'badge-gray'}>
+                        {CATEGORIA_LABELS[f.categoria as CategoriaFornecedor] || f.categoria}
                       </span>
                     </td>
-                    <td className="table-cell">
-                      <div className="flex items-center gap-1">
-                        {(f as any).arquivo_contrato_url && (
-                          <a href={(f as any).arquivo_contrato_url} target="_blank" rel="noopener noreferrer"
-                            className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title="Ver contrato">
-                            <FileText className="w-3.5 h-3.5" />
-                          </a>
+                    <td className="td hidden md:table-cell">
+                      <p className="text-sm truncate max-w-[160px]" style={{ color: 'var(--text-secondary)' }}>
+                        {f.contato_comercial || '—'}
+                      </p>
+                      {f.contato_tecnico && (
+                        <p className="text-xs truncate max-w-[160px]" style={{ color: 'var(--text-muted)' }}>
+                          {f.contato_tecnico}
+                        </p>
+                      )}
+                    </td>
+                    <td className="td hidden lg:table-cell" style={{ color: 'var(--text-muted)' }}>
+                      {f.sla || '—'}
+                    </td>
+                    <td className="td">
+                      <span className={statusColor[f.status] || 'badge-gray'}>
+                        {statusLabel[f.status] || f.status}
+                      </span>
+                    </td>
+                    <td className="td">
+                      <div className="row-actions">
+                        <Link href={`/fornecedores/${f.id}`}
+                          className="btn-icon-sm text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          title="Ver detalhes">
+                          <Eye className="w-3.5 h-3.5" />
+                        </Link>
+                        {(role === 'administrador' || role === 'ti') && (
+                          <button
+                            onClick={() => openEdit(f)}
+                            className="btn-icon-sm text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            title="Editar">
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
                         )}
-                        <Link href={`/fornecedores/${f.id}`} className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors" title="Ver"><Eye className="w-3.5 h-3.5" /></Link>
-                        <button onClick={() => edit(f)} className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Editar"><Edit className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => del(f.id, f.nome)} className="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" title="Excluir"><Trash2 className="w-3.5 h-3.5" /></button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => del(f.id, f.nome)}
+                            disabled={deleting === f.id}
+                            className="btn-icon-sm text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            title="Excluir">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -114,19 +240,19 @@ export function FornecedoresClient({ items, count, page, perPage }: { items: For
               </tbody>
             </table>
           )}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-              <p className="text-xs text-gray-500">Página {page} de {totalPages}</p>
-              <div className="flex gap-2">
-                {page > 1 && <Link href={`/fornecedores?page=${page - 1}`} className="btn-secondary text-xs py-1 px-3">← Anterior</Link>}
-                {page < totalPages && <Link href={`/fornecedores?page=${page + 1}`} className="btn-secondary text-xs py-1 px-3">Próxima →</Link>}
-              </div>
-            </div>
-          )}
         </div>
+
+        <Pagination total={count} page={page} perPage={perPage} />
       </div>
 
-      <FornecedorModal open={open} onClose={close} fornecedor={editing} onSuccess={() => { close(); router.refresh() }} />
+      {open && (
+        <FornecedorModal
+          open={open}
+          fornecedor={editing}
+          onClose={closeModal}
+          onSuccess={() => { closeModal(); router.refresh() }}
+        />
+      )}
     </>
   )
 }

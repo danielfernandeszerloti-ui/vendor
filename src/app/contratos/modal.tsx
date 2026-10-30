@@ -136,9 +136,9 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box w-full max-w-2xl animate-in">
-        <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="font-bold text-gray-900 dark:text-white">{isEdit ? 'Editar' : 'Novo'} Contrato</h2>
-          <button type="button" onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><X className="w-4 h-4" /></button>
+        <div className="modal-header">
+          <h2 className="modal-title">{isEdit ? 'Editar' : 'Novo'} Contrato</h2>
+          <button type="button" onClick={onClose} className="btn-icon"><X className="w-4 h-4" /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="overflow-y-auto scrollbar-thin max-h-[75vh]">
@@ -259,7 +259,7 @@ export function ContratoModal({ open, onClose, contrato, fornecedores, onSuccess
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 p-5 border-t border-gray-200 dark:border-gray-800">
+          <div className="modal-footer">
             <button type="button" onClick={onClose} className="btn-secondary">Cancelar</button>
             <button type="submit" disabled={saving} className="btn-primary">
               {saving ? <span className="flex items-center gap-2"><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Salvando...</span> : isEdit ? 'Atualizar' : 'Cadastrar'}
