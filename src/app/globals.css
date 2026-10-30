@@ -53,22 +53,32 @@
   [data-theme="dark"], .dark {
     --bg:         #101d31;
     --bg-card:    #17273f;
-    --bg-subtle:  #132238;
+    --bg-subtle:  #1a2d47;
     --border:     #263952;
     --border-subtle: #1f2e45;
     --line:       #263952;
 
-    --text-primary:   #d7e1f3;
-    --text-secondary: #a0b0ca;
-    --text-muted:     #8c9db8;
+    /* Texto — alto contraste no escuro */
+    --text-primary:   #e8eef8;
+    --text-secondary: #b8c8e0;
+    --text-muted:     #7a90ac;
     --text-disabled:  #364d68;
 
+    /* Aliases usados em componentes */
+    --ink:   #e8eef8;
+    --muted: #7a90ac;
+
+    /* Sidebar escura */
     --sidebar-bg:          #17273f;
     --sidebar-border:      #263952;
-    --sidebar-hover:       #203450;
+    --sidebar-hover:       #1f3251;
     --sidebar-active-bg:   #263d62;
     --sidebar-active-text: #a9bdff;
-    --sidebar-text:        #8c9db8;
+    --sidebar-text:        #8ca8c8;
+
+    /* Cards e inputs */
+    --bg-card:    #17273f;
+    --brand-navy: #4a6fa8;
   }
 
   *, *::before, *::after { box-sizing: border-box; }
