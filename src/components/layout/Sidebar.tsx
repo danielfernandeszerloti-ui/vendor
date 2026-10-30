@@ -46,13 +46,13 @@ const MAIN_NAV = [
 ]
 
 const ADMIN_NAV = [
-  { href: '/usuarios', icon: Users,  label: 'Usuários' },
-  { href: '/auditoria', icon: Shield, label: 'Auditoria' },
+  { href: '/usuarios',  icon: Users,  label: 'Usuários' },
+  { href: '/auditoria', icon: Shield,  label: 'Auditoria' },
 ]
 
 const ROLE_LABEL: Record<string, string> = {
   administrador: 'Administrador',
-  ti:            'TI',
+  ti:            'Analista de TI',
   visualizacao:  'Visualização',
   financeiro:    'Financeiro',
 }
@@ -69,10 +69,8 @@ export function Sidebar({ user }: Props) {
   const [collapsed, setCollapsed]   = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // Fecha sidebar mobile ao navegar
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
-  // Salva preferência de colapso
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed')
     if (saved === 'true') setCollapsed(true)
@@ -91,102 +89,152 @@ export function Sidebar({ user }: Props) {
     router.refresh()
   }, [supabase, router])
 
-  const isAdmin = user?.role === 'administrador'
+  const isAdmin    = user?.role === 'administrador'
   const visibleMain = MAIN_NAV.filter(item => item.roles.includes(user?.role || ''))
+  const initials   = user ? user.nome.charAt(0).toUpperCase() : '?'
 
   function NavLink({ href, icon: Icon, label }: { href: string; icon: typeof LayoutDashboard; label: string }) {
-    const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/')) || (href === '/dashboard' && pathname === '/dashboard')
+    const active =
+      pathname === href ||
+      (href !== '/dashboard' && pathname.startsWith(href + '/')) ||
+      (href === '/dashboard' && pathname === '/dashboard')
+
     return (
       <Link
         href={href}
         title={collapsed ? label : undefined}
-        className={cn(
-          'nav-item group',
-          active && 'nav-item-active',
-          collapsed && 'justify-center px-0'
-        )}
+        className={cn('nav-item', active && 'nav-item-active', collapsed && 'justify-center')}
+        style={collapsed ? { padding: '11px' } : undefined}
       >
-        <Icon className={cn('w-4 h-4 flex-shrink-0', active && 'text-current')} />
+        <Icon className="w-[15px] h-[15px] flex-shrink-0" />
         {!collapsed && <span className="truncate">{label}</span>}
       </Link>
     )
   }
 
   const sidebarContent = (
-    <div className={cn(
-      'h-full flex flex-col overflow-hidden transition-all duration-200',
-      collapsed ? 'w-[60px]' : 'w-[220px]'
-    )}>
-      {/* Logo */}
+    <div
+      className={cn(
+        'h-full flex flex-col overflow-hidden transition-all duration-200',
+        collapsed ? 'w-[64px]' : 'w-[250px]'
+      )}
+      style={{ background: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}
+    >
+      {/* ── Workspace card ── */}
       <div
-        className="flex items-center gap-3 h-14 px-4 flex-shrink-0"
-        style={{ background: 'linear-gradient(160deg, #232994 0%, #1a1f6e 60%, #0f1347 100%)' }}
+        className={cn(
+          'flex-shrink-0 mx-3 mt-6 mb-5 rounded-lg border',
+          collapsed ? 'p-2 flex items-center justify-center' : 'p-3'
+        )}
+        style={{
+          background: 'var(--bg-subtle)',
+          borderColor: 'var(--line)',
+        }}
       >
-        <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center">
-          <Image
-            src="/logo.png"
-            alt="Zerbini"
-            width={28}
-            height={28}
-            className="object-contain drop-shadow-sm"
-          />
-        </div>
-        {!collapsed && (
-          <div className="overflow-hidden leading-tight">
-            <p className="text-[13px] font-bold text-white truncate">Zerbini do Brasil</p>
-            <p className="text-[10px] font-medium truncate" style={{ color: '#00c8b4', opacity: 0.9 }}>
-              Gestão de Fornecedores
-            </p>
+        {collapsed ? (
+          /* Logo compacto */
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ background: '#e8edfc', color: 'var(--navy)' }}
+          >
+            <Image src="/logo.png" alt="Z" width={20} height={20} className="object-contain" />
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-[33px] h-[33px] rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: '#e8edfc', color: 'var(--navy)' }}
+            >
+              <Image src="/logo.png" alt="Zerbini" width={22} height={22} className="object-contain" />
+            </div>
+            <div className="overflow-hidden leading-tight flex-1 min-w-0">
+              <p
+                className="font-bold truncate"
+                style={{ fontSize: 14, color: 'var(--navy)', letterSpacing: '-0.3px' }}
+              >
+                Zerbini do Brasil
+              </p>
+              <p
+                className="flex items-center gap-1 truncate"
+                style={{ fontSize: 8, letterSpacing: '1.2px', color: 'var(--muted)', textTransform: 'uppercase', fontWeight: 550 }}
+              >
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: 'var(--aqua)' }}
+                />
+                Gestão de Fornecedores
+              </p>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav
-        className="flex-1 p-2 space-y-0.5 overflow-y-auto scrollbar-thin"
-        style={{ background: 'var(--sidebar-bg)' }}
-      >
+      {/* ── Navegação principal ── */}
+      <nav className="flex-1 overflow-y-auto scrollbar-thin" style={{ padding: '0 10px' }}>
         {!collapsed && (
-          <span className="nav-section-label mt-1 mb-0.5">Navegação</span>
+          <span className="nav-section-label">Menu</span>
         )}
-        {visibleMain.map(item => (
-          <NavLink key={item.href} {...item} />
-        ))}
+        <div className="space-y-0.5">
+          {visibleMain.map(item => (
+            <NavLink key={item.href} {...item} />
+          ))}
+        </div>
 
         {isAdmin && (
           <>
             {!collapsed && (
-              <span className="nav-section-label mt-4 mb-0.5">Administração</span>
+              <span className="nav-section-label mt-5">Administração</span>
             )}
-            {ADMIN_NAV.map(item => (
-              <NavLink key={item.href} {...item} />
-            ))}
+            <div className="space-y-0.5">
+              {ADMIN_NAV.map(item => (
+                <NavLink key={item.href} {...item} />
+              ))}
+            </div>
           </>
         )}
       </nav>
 
-      {/* User + Logout */}
+      {/* ── Perfil + Sair ── */}
       <div
-        className="p-2 flex-shrink-0"
-        style={{
-          background: 'var(--sidebar-bg)',
-          borderTop: '1px solid var(--sidebar-border)',
-        }}
+        className="flex-shrink-0 pt-4 pb-5"
+        style={{ borderTop: '1px solid var(--line)', padding: '16px 10px' }}
       >
         {!collapsed && user && (
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg mb-1"
-            style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <div
+            className="flex items-center gap-2.5 mb-3 px-2 py-1.5 rounded-lg"
+          >
+            {/* Avatar */}
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #2630a8, #00c8b4)' }}
+              className="w-[34px] h-[34px] rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+              style={{ background: '#e9edfb', color: 'var(--navy)' }}
             >
-              {user.nome.charAt(0).toUpperCase()}
+              {initials}
             </div>
             <div className="overflow-hidden flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate leading-tight">{user.nome}</p>
-              <p className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <p
+                className="font-semibold truncate leading-tight"
+                style={{ fontSize: 12, color: 'var(--ink)' }}
+              >
+                {user.nome}
+              </p>
+              <p
+                className="truncate"
+                style={{ fontSize: 9, color: 'var(--muted)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 550 }}
+              >
                 {ROLE_LABEL[user.role] || user.role}
               </p>
+            </div>
+          </div>
+        )}
+
+        {collapsed && user && (
+          <div className="flex justify-center mb-3">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+              style={{ background: '#e9edfb', color: 'var(--navy)' }}
+              title={user.nome}
+            >
+              {initials}
             </div>
           </div>
         )}
@@ -195,11 +243,16 @@ export function Sidebar({ user }: Props) {
           onClick={logout}
           title={collapsed ? 'Sair' : undefined}
           className={cn(
-            'nav-item w-full text-red-400 hover:text-red-300 hover:!bg-red-500/10',
-            collapsed && 'justify-center px-0'
+            'nav-item w-full',
+            collapsed && 'justify-center'
           )}
+          style={{
+            color: '#dc6293',
+            fontSize: 12,
+            padding: collapsed ? '10px' : '10px 13px',
+          }}
         >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <LogOut className="w-[15px] h-[15px] flex-shrink-0" />
           {!collapsed && <span>Sair</span>}
         </button>
       </div>
@@ -208,11 +261,11 @@ export function Sidebar({ user }: Props) {
 
   return (
     <>
-      {/* Botão mobile */}
+      {/* Botão mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-3 left-3 z-50 w-9 h-9 rounded-lg flex items-center justify-center shadow-md"
-        style={{ background: 'var(--brand-navy)', color: '#fff' }}
+        className="md:hidden fixed top-3.5 left-3.5 z-50 w-9 h-9 rounded-lg flex items-center justify-center shadow-md"
+        style={{ background: 'var(--navy)', color: '#fff' }}
         aria-label="Abrir menu"
       >
         <Menu className="w-4 h-4" />
@@ -229,41 +282,39 @@ export function Sidebar({ user }: Props) {
       {/* Mobile drawer */}
       <aside
         className={cn(
-          'md:hidden fixed inset-y-0 left-0 z-50 shadow-xl transition-transform duration-200',
+          'md:hidden fixed inset-y-0 left-0 z-50 shadow-2xl transition-transform duration-200',
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
-        style={{ background: 'var(--sidebar-bg)', width: 220 }}
+        style={{ width: 250 }}
       >
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute right-3 top-3 w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{ color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.06)' }}
+          className="absolute right-3 top-3.5 w-7 h-7 rounded-lg flex items-center justify-center z-10"
+          style={{ background: 'var(--bg-subtle)', color: 'var(--muted)' }}
         >
           <X className="w-4 h-4" />
         </button>
-        <div style={{ width: 220 }}>{sidebarContent}</div>
+        {sidebarContent}
       </aside>
 
       {/* Desktop sidebar */}
       <aside
         className="hidden md:flex flex-col h-screen flex-shrink-0 relative"
         style={{
-          width: collapsed ? 60 : 220,
-          background: 'var(--sidebar-bg)',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          width: collapsed ? 64 : 250,
           transition: 'width 200ms ease',
         }}
       >
         {sidebarContent}
 
-        {/* Toggle collapse button */}
+        {/* Toggle collapse */}
         <button
           onClick={toggleCollapsed}
-          className="absolute -right-3 top-[52px] z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-md"
+          className="absolute -right-3 top-[70px] z-10 w-6 h-6 rounded-full flex items-center justify-center shadow-md"
           style={{
             background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
+            border: '1px solid var(--line)',
+            color: 'var(--muted)',
           }}
           aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
         >
